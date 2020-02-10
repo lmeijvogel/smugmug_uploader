@@ -1,7 +1,7 @@
 require 'dotenv'
 require 'optparse'
 
-$LOAD_PATH << "."
+$LOAD_PATH << "lib"
 
 require 'migration_log_mapper'
 require 'smugmug_adapter'
