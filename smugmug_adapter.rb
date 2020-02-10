@@ -65,12 +65,13 @@ class SmugmugAdapter
 
     response = get(album_images_uri).body
 
-    album_images = JSON.parse(response).dig("Response", "AlbumImage")
+    # Ensure it is an array to handle empty albums
+    album_images = Array(JSON.parse(response).dig("Response", "AlbumImage"))
 
     while next_page_url = JSON.parse(response).dig("Response", "Pages", "NextPage")
       response = get(next_page_url).body
 
-      album_images += JSON.parse(response).dig("Response", "AlbumImage")
+      album_images += Array(JSON.parse(response).dig("Response", "AlbumImage"))
     end
 
     album_images.map { |image| image["FileName"] }
