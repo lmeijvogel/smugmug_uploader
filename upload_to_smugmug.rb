@@ -1,4 +1,5 @@
 require 'dotenv'
+require 'optparse'
 
 $LOAD_PATH << "."
 
@@ -11,20 +12,39 @@ Dotenv.load
 LOCAL_IMAGES_PATH = "/data/user_data/My Pictures/"
 
 class UploadToSmugmug
-  attr_accessor :smugmug_adapter, :input_path, :dry_run
+  attr_accessor :smugmug_adapter, :dry_run
 
-  def initialize(input_path, dry_run)
+  def initialize(dry_run)
     smugmug_api_host = "https://www.smugmug.com"
 
     public_galleries_host = ENV.fetch("PUBLIC_GALLERIES_HOSTNAME")
     self.smugmug_adapter = SmugmugAdapter.new(auth, smugmug_api_host, public_galleries_host)
-    self.input_path = input_path
     self.dry_run = dry_run
   end
 
-  def main
-    migration_log_mapper = MigrationLogMapper.new(input_path, LOCAL_IMAGES_PATH)
+  def main(input_dirs)
+    input_dirs.each do |folder_to_upload|
+      puts "Checking folder: #{folder_to_upload}"
 
+      folder_in_smugmug = File.basename(folder_to_upload)
+
+      local_files = Dir.glob(File.join(folder_to_upload, "*.{jpg,JPG,mp4,mv}")).map { |file| File.basename(file) }
+
+      # The year folder will be prepended by the adapter
+      album = smugmug_adapter.fetch_album_with_name(folder_in_smugmug)
+
+      if album
+        images_on_smugmug = smugmug_adapter.images_for_album(album)
+
+        images_not_on_smugmug = local_files - images_on_smugmug
+
+        puts images_not_on_smugmug
+      else
+        puts "Album is not on smugmug yet"
+      end
+    end
+
+    exit
     access_token = smugmug_adapter.access_token
 
     file_uploader = FileUploader.new(access_token)
@@ -40,7 +60,6 @@ class UploadToSmugmug
   end
 
 
-  # TODO: Fix upload to wrong path
   private
 
   def upload_entry(entry, session, csv)
@@ -88,6 +107,21 @@ class UploadToSmugmug
   end
 end
 
+options = {}
+
+option_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{File.basename(__FILE__)} [options] dir_glob"
+  opts.on "--dry-run", "Do not actually upload files" do options[:dry_run] = true end
+  opts.on "--help", "-h", "Print this text" do
+    puts opts
+    exit 0
+  end
+end.parse!
+
+input_dirs = ARGV
+
+UploadToSmugmug.new(options[:dry_run]).main(input_dirs)
+exit
 dry_run = ARGV.include?("--dry-run")
 
 input_path = ARGV[-1]
