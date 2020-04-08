@@ -39,14 +39,6 @@ class SmugmugAdapter
                        end
   end
 
-  def album_with_name(album_name)
-    @_album_name_cache ||= Hash.new do |hash, key|
-      hash[key] = fetch_album_with_name(key)
-    end
-
-    @_album_name_cache[album_name]
-  end
-
   def fetch_album_with_name(album_name)
     folder = Integer(album_name[0..3])
     album_name_with_hyphens = album_name.gsub(/ /, "-").gsub(/[^A-Za-z0-9\-]/, "")
@@ -58,6 +50,25 @@ class SmugmugAdapter
     response = get(query).body
 
     JSON.parse(response).dig("Response", "Album")
+  end
+
+  def create_album_with_name(album_name)
+    folder = Integer(album_name[0..3])
+    album_name_with_hyphens = album_name.gsub(/ /, "-").gsub(/[^A-Za-z0-9\-]/, "")
+
+    folder_uri = "https://#{public_galleries_hostname}/#{folder}"
+    folder_query = "/api/v2!weburilookup?WebUri=#{CGI.escape(folder_uri)}"
+    folder_response = get(folder_query)
+    folder_json = JSON.parse(folder_response.body)
+
+    folder_albums_uri = folder_json.dig("Response", "Folder", "Uris", "FolderAlbums", "Uri")
+
+    album_response = post(folder_albums_uri,
+                    "Name" => album_name,
+                    "UrlName" => album_name_with_hyphens
+                   )
+
+    JSON.parse(album_response.body).dig("Response", "Album")
   end
 
   def images_for_album(album)
@@ -80,7 +91,6 @@ class SmugmugAdapter
   private
 
   def get(path)
-    puts "Getting #{path}"
     access_token.get(path, {
       "Accept" => "application/json"
     })
@@ -91,4 +101,17 @@ class SmugmugAdapter
     raise
   end
 
+  def post(path, data)
+    headers = {
+      "Accept" => "application/json",
+      "Content-Type" => "application/json"
+    }
+
+    access_token.post(path, data.to_json, headers)
+  rescue StandardError => e
+    puts "Error while posting '#{path}'"
+    puts "Error: #{e.message}"
+
+    raise
+  end
 end
