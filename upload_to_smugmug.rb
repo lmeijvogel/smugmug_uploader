@@ -49,7 +49,7 @@ class UploadToSmugmug
     should_upload = ask("Upload? [yN]", default: false)
 
     if should_upload
-      upload_images(images_not_on_smugmug)
+      upload_images(images_not_on_smugmug, album)
     end
   end
 
@@ -83,7 +83,7 @@ class UploadToSmugmug
     end
   end
 
-  def upload_images(images)
+  def upload_images(images, album)
     access_token = smugmug_adapter.access_token
 
     file_uploader = FileUploader.new(access_token)
