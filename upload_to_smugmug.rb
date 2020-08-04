@@ -80,7 +80,7 @@ class UploadToSmugmug
   def find_new_images(folder_to_upload, album)
     images_on_smugmug = smugmug_adapter.images_for_album(album)
 
-    local_files = Dir.glob(File.join(folder_to_upload, "*.{jpg,JPG,mp4,mv}"))
+    local_files = Dir.glob(File.join(folder_to_upload, "*.{jpg,JPG,mp4,mov}"))
 
     local_files.reject do |local_file|
       images_on_smugmug.include?(File.basename(local_file))
