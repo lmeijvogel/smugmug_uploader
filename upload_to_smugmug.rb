@@ -1,3 +1,7 @@
+require 'bundler'
+
+Bundler.load
+
 require 'dotenv'
 require 'optparse'
 
