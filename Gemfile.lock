@@ -22,7 +22,7 @@ GEM
     multipart-post (2.1.1)
     nokogiri (1.10.9)
       mini_portile2 (~> 2.4.0)
-    oauth (0.5.4)
+    oauth (0.5.5)
     parallel (1.19.1)
     parser (2.7.0.1)
       ast (~> 2.4.0)
